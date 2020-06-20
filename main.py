@@ -1,5 +1,7 @@
 import pygame
 import numpy as np
+import random
+import math
 
 #DEFINE COLORS
 WHITE = (255, 255, 255)
@@ -35,9 +37,35 @@ red = '2'
 bking = '3'
 rking = '4'
 
-turn = 0
+player = 0
+ai = 1
 
-#DEFINE FUNCTIONS
+turn = player 
+
+#AI
+def get_pieces(turn):
+    pieces = []
+    for r in range(ROW_COUNT):
+        for c in range(COL_COUNT):
+            if turn == ai:
+                if board[r][c] == black or board[r][c] == bking:
+                    pieces.append([r, c])
+            else:
+                if board[r][c] == red or board[r][c] == rking:
+                    pieces.append([r, c])
+    return pieces
+
+def get_moves(turn):
+    moves = []
+    pieces = get_pieces(turn)
+    for r, c in pieces:
+        for nr, nc in get_valid_moves(r, c):
+            moves.append([r, c, nr, nc])
+    return moves
+
+def choose_move(turn):
+    moves = get_moves(turn)
+    return random.choice(moves)
 
 #DRAW BOARD
 def draw_board(): 
@@ -169,11 +197,6 @@ def update_board(r, c, nr, nc):
     
     draw_board()
 
-
-
-
-
-
 #DEFINE GRAPHICS
 pygame.init()
 
@@ -203,33 +226,42 @@ while not gameover:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameover = True
-       
     if event.type == pygame.MOUSEBUTTONDOWN:
-        if not selected:
-            r, c = get_coords(event.pos)
-            #SHOW PIECE IS SELECTED
-            if (valid_click_pos(r, c)):
-                selected = True
-                draw_selected(r, c)
-        else:
-            nr, nc = get_coords(event.pos)
-            #PLAYER CLICKS ON ANOTHER RED PIECE
-            if turn==0 and (board[nr][nc] == red or board[nr][nc] == rking):              
-                r=nr
-                c=nc
-                draw_selected(r, c)
-            #PLAYER CLICKS ON ANOTHER BLACK PIECE
-            elif turn==1 and (board[nr][nc] == black or board[nr][nc] == bking):
-                r=nr
-                c=nc
-                draw_selected(r, c)
-            #PLAYER MOVES HIS PIECE
-            elif is_move_valid(r, c, nr, nc):
-                update_board(r, c, nr, nc)
-                turn +=1
-                turn %= 2
-                selected = False
-                    
+        if turn == player:
+            if not selected:
+                r, c = get_coords(event.pos)
+                #SHOW PIECE IS SELECTED
+                if (valid_click_pos(r, c)):
+                    selected = True
+                    draw_selected(r, c)
+            else:
+                nr, nc = get_coords(event.pos)
+                #PLAYER CLICKS ON ANOTHER RED PIECE
+                if turn==0 and (board[nr][nc] == red or board[nr][nc] == rking):              
+                    r=nr
+                    c=nc
+                    draw_selected(r, c)
+                #PLAYER CLICKS ON ANOTHER BLACK PIECE
+                """
+                elif turn==1 and (board[nr][nc] == black or board[nr][nc] == bking):
+                    r=nr
+                    c=nc
+                    draw_selected(r, c)
+                """
+                #PLAYER MOVES HIS PIECE
+                if is_move_valid(r, c, nr, nc):
+                    update_board(r, c, nr, nc)
+                   
+                    turn = ai
+                    selected = False
+
+    if turn == ai:
+        r, c, nr, nc = choose_move(ai)
+
+        pygame.time.wait(300)    
+        update_board(r, c, nr, nc)
+
+        turn = player
 
     pygame.display.update()
 
